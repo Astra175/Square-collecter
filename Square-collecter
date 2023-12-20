@@ -1,0 +1,112 @@
+import pygame
+import sys
+import random
+
+###
+pygame.init()
+
+#Окно
+WIDTH, HEIGHT = 800, 600
+win = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Hunter")
+
+#Цвета
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+
+#Охотник
+hunter_width, hunter_height = 50, 50
+hunter = pygame.Rect(WIDTH // 2 - hunter_width // 2, HEIGHT - hunter_height - 10, hunter_width, hunter_height)
+
+#Яблоки
+apple_width, apple_height = 50, 50
+apple_speed = 5
+apples = []
+
+#Счетчики
+score = 0
+font = pygame.font.Font(None, 36)
+goal_score = 20
+timer = 30
+start_time = pygame.time.get_ticks()
+
+#Выигрыш и проигрыш
+game_over_text = font.render("Game Over", True, (0, 0, 0))
+game_win_text = font.render("You win", True, (0, 0, 0))
+
+#время
+clock = pygame.time.Clock()
+
+#Игра
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    keys = pygame.key.get_pressed()
+
+    #Движение охотник
+    if keys[pygame.K_LEFT] and hunter.left > 0:
+        hunter.x -= apple_speed
+    if keys[pygame.K_RIGHT] and hunter.right < WIDTH:
+        hunter.x += apple_speed
+
+    #Обновить таймер
+    elapsed_time = (pygame.time.get_ticks() - start_time) // 1000
+    remaining_time = max(0, timer - elapsed_time)
+
+    #Спавн яблок
+    if random.randint(1, 30) == 1:
+        new_apple = pygame.Rect(random.randint(0, WIDTH - apple_width), 0, apple_width, apple_height)
+        apples.append(new_apple)
+
+    #Движение яблок
+    for apple in apples:
+        apple.y += apple_speed
+
+        #Коллизия
+        if hunter.colliderect(apple):
+            apples.remove(apple)
+            score += 1
+
+        
+        if apple.y > HEIGHT:
+            apples.remove(apple)
+
+    
+    win.fill(WHITE)
+
+    pygame.draw.rect(win, GREEN, hunter)
+
+    for apple in apples:
+        pygame.draw.rect(win, RED, apple)
+
+    #Дисплей таймер и счетчик
+    score_text = font.render(f"Score: {score}/{goal_score}", True, (0, 0, 0))
+    timer_text = font.render(f"Time: {remaining_time}s", True, (0, 0, 0))
+    win.blit(score_text, (10, 10))
+    win.blit(timer_text, (10, 50))
+
+    #Проверка
+    
+
+    if score < goal_score and remaining_time == 0:
+        win.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - game_over_text.get_height() // 2))
+        pygame.display.flip()
+        pygame.time.delay(2000)
+        pygame.quit()
+        sys.exit()
+
+    if score == goal_score:
+        win.blit(game_win_text, (WIDTH // 2 - game_win_text.get_width() // 2, HEIGHT // 2 - game_win_text.get_height() // 2))
+        pygame.display.flip()
+        pygame.time.delay(2000)
+        pygame.quit()
+        sys.exit()
+
+    pygame.display.flip()
+    clock.tick(60)
+
+
